@@ -1,0 +1,102 @@
+-- tysm to yalu102#3724 for making the ball
+
+-- Define Variables
+local player = game:GetService("Players").LocalPlayer
+local char = player.Character
+local hat = char["Soccerball head"] -- replace with whatever hat you want (e.g Stinger77)
+local destroymesh = false
+local position = char.Humanoid.RootPart.Position
+local slowdown = 0.99 -- Make this SLIGHTLY lower (eg 0.98) if it is rolling too far.
+local hooks = {} -- table used later for easy cleanup
+
+-- Remove hat mesh and attachments to the player
+for i,v in pairs(hat:GetDescendants()) do -- get all descendants
+    if(v:IsA("Weld")) then -- check if it is a weld to detach it from the player's head/body
+        v:Destroy() -- destroy it if it is
+    end
+    
+    -- same for Mesh/Specialmesh
+    if(v:IsA("SpecialMesh") or v:IsA("Mesh")) then
+        if(destroymesh) then -- ensure they want the mesh gone
+            v:Destroy()
+        end
+    end
+end
+
+-- Create the ball object
+local ball = Instance.new("Part", game:GetService("Workspace")) -- Spawn Part and set parent to game:GetService("Workspace")
+ball.Shape = Enum.PartType.Ball
+ball.Size = Vector3.new(1.6, 1.6, 1.6)
+ball.Position = position + Vector3.new(0,0,5) -- Spawn to the side of the player by 5 studs on the Z axis
+ball.Transparency = 0.5
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local part = Instance.new("Part")
+part.Size = Vector3.new(20, 5, 1)
+part.Anchored = true
+part.CanCollide = true
+part.Transparency = 0.5
+part.BrickColor = BrickColor.new("Bright blue")
+part.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(0, -3, -20)
+part.Parent = game.Workspace
+
+local part = Instance.new("Part")
+part.Size = Vector3.new(20, 5, 1)
+part.Anchored = true
+part.CanCollide = true
+part.Transparency = 0.5
+part.BrickColor = BrickColor.new("Bright blue")
+part.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(0, -3, 20)
+part.Parent = game.Workspace
+
+local part = Instance.new("Part")
+part.Size = Vector3.new(1, 5, 40)
+part.Anchored = true
+part.CanCollide = true
+part.Transparency = 0.5
+part.BrickColor = BrickColor.new("Bright blue")
+part.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(10, -3, 0)
+part.Parent = game.Workspace
+
+local part = Instance.new("Part")
+part.Size = Vector3.new(1, 5, 40)
+part.Anchored = true
+part.CanCollide = true
+part.Transparency = 0.5
+part.BrickColor = BrickColor.new("Bright blue")
+part.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(-10, -3, 0)
+part.Parent = game.Workspace
+
+local Cylinder = Instance.new("Part", game:GetService("Workspace")) -- Spawn Part and set parent to game:GetService("Workspace")
+Cylinder.Shape = Enum.PartType.Cylinder
+Cylinder.Size = Vector3.new(1, 1, 1)
+Cylinder.CanCollide = false
+Cylinder.Position = position + Vector3.new(0,0,5) -- Spawn to the side of the player by 5 studs on the Z axis
+Cylinder.Transparency = 0.5
+Cylinder.Anchored = true
+Cylinder.Name = "Goal"
+
+-- game:GetService("Players").LocalPlayer.Character["ARC0Accessory"].Handle.Parent = Goal
+-- hat.Handle.CFrame = Goal.CFrame
+-- obj2.att1_Handle.Rotation =Vector3.new(0,-190,310)
+-- obj2.att1_Handle.Position = Vector3.new(2,-0,-0)
+
+hat.Handle.CanCollide = false
+-- Update CFrame every frame
+table.insert(hooks, game:GetService("RunService").Heartbeat:Connect(function () -- insert hook to table for easy disconnections
+    hat.Handle.Velocity = Vector3.new(0, 30, 0) -- bypass network (this should stop the hat from falling) ( this may not always work )
+    hat.Handle.CFrame = ball.CFrame
+    
+     -- Slow the ball down otherwise it will roll forever.
+    ball.Velocity = Vector3.new(ball.Velocity.X*slowdown, ball.Velocity.Y, ball.Velocity.Z*slowdown)
+end))
+
+table.insert(hooks, player.CharacterRemoving:Connect(function () -- await removal of character (death or respawn)
+    ball:Destroy() -- cleanup
+    
+    -- unhook all hooks so they do not take up memory etc
+    for i,hook in pairs(hooks) do
+        hook:Disconnect()
+    end
+end))
